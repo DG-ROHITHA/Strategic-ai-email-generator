@@ -1,0 +1,41 @@
+@import "tailwindcss";
+
+:root {
+  --app-bg: #0f172a;
+  --panel-bg: rgba(30, 41, 59, 0.7);
+  --accent: #38bdf8;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+}
+
+body {
+  @apply bg-slate-950 text-slate-50 antialiased;
+  background-image: 
+    radial-gradient(at 0% 0%, hsla(210, 100%, 15%, 1) 0, transparent 50%), 
+    radial-gradient(at 100% 100%, hsla(220, 100%, 10%, 1) 0, transparent 50%);
+  min-height: 100vh;
+}
+
+@utility glass {
+  @apply bg-slate-900/50 backdrop-blur-xl border border-slate-700/50 shadow-2xl;
+}
+
+@utility gradient-text {
+  @apply bg-clip-text text-transparent bg-gradient-to-r from-sky-400 to-blue-600 font-bold;
+}
+
+@utility premium-card {
+  @apply glass rounded-2xl p-6 transition-all duration-300 hover:border-sky-500/50 hover:shadow-sky-500/10;
+}
+
+@utility btn-primary {
+  @apply px-6 py-3 bg-gradient-to-r from-sky-500 to-blue-600 rounded-xl font-semibold text-white 
+         transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] 
+         shadow-lg shadow-sky-500/20 hover:shadow-sky-500/40;
+}
+
+@utility btn-secondary {
+  @apply px-6 py-3 glass rounded-xl font-semibold text-slate-200 
+         transition-all duration-300 transform hover:scale-[1.02] active:scale-[0.98] 
+         hover:bg-slate-800/80;
+}
