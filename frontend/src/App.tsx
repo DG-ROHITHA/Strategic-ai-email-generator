@@ -31,7 +31,7 @@ const App = () => {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [isRecording, setIsRecording] = useState(false);
-  const [coachFeedback, setCoachFeedback] = useState(null);
+
   const [sendTimer, setSendTimer] = useState(null);
   const [countdown, setCountdown] = useState(0);
 
@@ -117,25 +117,7 @@ const App = () => {
     }
   };
 
-  // Real-time Coaching Logic (Debounced)
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (formData.existing_email.length > 20) {
-        try {
-          const res = await axios.post(`${API_BASE}/coach`, {
-            current_draft: formData.existing_email,
-            recipient: formData.recipient,
-            intent: formData.email_purpose
-          });
-          setCoachFeedback(res.data);
-        } catch (e) {
-          console.error("Coach failed", e);
-        }
-      }
-    }, 1000);
 
-    return () => clearTimeout(delayDebounceFn);
-  }, [formData.existing_email, formData.recipient, formData.email_purpose]);
 
   const handleSend = () => {
     setCountdown(5);
@@ -362,18 +344,14 @@ const App = () => {
               initial={{ opacity: 0, scale: 0.95 }}
               animate={{ opacity: 1, scale: 1 }}
               exit={{ opacity: 0, scale: 0.95 }}
-              className="grid md:grid-cols-3 gap-8"
+              className="premium-card"
             >
-              <div className="md:col-span-2 premium-card">
+              <div>
                 <div className="flex items-center justify-between mb-6">
                   <h3 className="text-xl font-bold flex items-center space-x-2">
                     <Sparkles className="text-sky-400 w-5 h-5" />
                     <span>Active Workspace</span>
                   </h3>
-                  <div className="flex items-center space-x-2 bg-sky-500/10 px-3 py-1 rounded-full">
-                    <div className="w-2 h-2 rounded-full bg-sky-500 animate-pulse" />
-                    <span className="text-sky-400 text-xs font-bold uppercase tracking-tighter">Real-time coaching ON</span>
-                  </div>
                 </div>
 
                 <textarea 
@@ -390,50 +368,6 @@ const App = () => {
                     {loading ? <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin" /> : <Sparkles className="w-5 h-5" />}
                     <span>Simulate Outcomes</span>
                   </button>
-                </div>
-              </div>
-
-              <div className="space-y-6">
-                <div className="premium-card bg-sky-500/5 border-sky-500/20">
-                  <h4 className="text-sm font-bold text-sky-400 uppercase mb-4 flex items-center space-x-2">
-                    <LifeBuoy className="w-4 h-4" />
-                    <span>Real-time Coach</span>
-                  </h4>
-                  <AnimatePresence mode="wait">
-                    {coachFeedback ? (
-                      <motion.div
-                        initial={{ opacity: 0, y: 10 }}
-                        animate={{ opacity: 1, y: 0 }}
-                        className="space-y-4"
-                      >
-                        <div className={cn(
-                          "p-3 rounded-lg flex items-start space-x-3",
-                          coachFeedback.is_too_aggressive ? "bg-red-500/10 text-red-400" : "bg-emerald-500/10 text-emerald-400"
-                        )}>
-                          <AlertCircle className="w-5 h-5 mt-0.5 flex-shrink-0" />
-                          <p className="text-sm font-medium">{coachFeedback.tone_check}</p>
-                        </div>
-                        <div className="space-y-2">
-                          {coachFeedback.suggestions.map((s, i) => (
-                            <div key={i} className="flex items-start space-x-2 text-slate-300 text-sm italic">
-                              <span className="text-sky-500 font-bold">•</span>
-                              <p>{s}</p>
-                            </div>
-                          ))}
-                        </div>
-                        {coachFeedback.improved_sentence && (
-                          <div className="mt-4 p-4 bg-slate-800/50 rounded-xl border border-slate-700">
-                             <p className="text-xs text-slate-500 mb-2 font-bold uppercase">Suggested Improvement</p>
-                             <p className="text-sm text-sky-200">"{coachFeedback.improved_sentence}"</p>
-                          </div>
-                        )}
-                      </motion.div>
-                    ) : (
-                      <div className="py-8 text-center text-slate-600 italic text-sm">
-                        Waiting for draft content...
-                      </div>
-                    )}
-                  </AnimatePresence>
                 </div>
               </div>
             </motion.div>
