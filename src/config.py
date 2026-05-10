@@ -1,12 +1,11 @@
 """Configuration helpers for model and environment setup."""
 
-import importlib
 import os
 from dataclasses import dataclass
 
 from dotenv import load_dotenv
 from langchain_core.language_models.chat_models import BaseChatModel
-from langchain_openai import ChatOpenAI
+from langchain_google_genai import ChatGoogleGenerativeAI
 
 load_dotenv()
 
@@ -15,83 +14,70 @@ load_dotenv()
 class AppConfig:
     """Config values loaded from .env and used by the UI."""
 
-    openai_api_keys: list[str] = None
-    model_name: str = "gpt-4o-mini"
+    gemini_api_key: str = ""
+    gemini_model: str = "gemini-2.0-flash"
     temperature: float = 0.3
-    base_url: str = ""
-    ollama_model: str = "llama3.2:3b"
-    ollama_base_url: str = "http://localhost:11434"
 
-    def __post_init__(self):
-        if self.openai_api_keys is None:
-            self.openai_api_keys = []
+    @property
+    def openai_api_key(self):
+        """Legacy compat — returns empty string."""
+        return ""
+
+    @property
+    def openai_api_keys(self):
+        """Legacy compat — returns list with gemini key if available."""
+        return [self.gemini_api_key] if self.gemini_api_key else []
 
 
 def load_config() -> AppConfig:
     """Read configuration values from environment variables."""
 
-    temperature_raw = os.getenv("OPENAI_TEMPERATURE", "0.3")
+    temperature_raw = os.getenv("GEMINI_TEMPERATURE", os.getenv("OPENAI_TEMPERATURE", "0.3"))
     try:
         parsed_temperature = float(temperature_raw)
     except ValueError:
         parsed_temperature = 0.3
 
-    api_keys_raw = os.getenv("OPENAI_API_KEY", "")
-    # Support comma-separated keys for rotation
-    api_keys = [k.strip() for k in api_keys_raw.split(",") if k.strip()]
-
     return AppConfig(
-        openai_api_keys=api_keys,
-        model_name=os.getenv("OPENAI_MODEL", "gpt-4o-mini"),
+        gemini_api_key=os.getenv("GEMINI_API_KEY", ""),
+        gemini_model=os.getenv("GEMINI_MODEL", "gemini-2.0-flash"),
         temperature=parsed_temperature,
-        base_url=os.getenv("OPENAI_BASE_URL", ""),
-        ollama_model=os.getenv("OLLAMA_MODEL", "llama3.2:3b"),
-        ollama_base_url=os.getenv("OLLAMA_BASE_URL", "http://localhost:11434"),
     )
 
 
-def create_llm(
+def create_gemini_llm(
     api_key: str,
-    model_name: str,
-    temperature: float,
-    base_url: str = "",
+    model_name: str = "gemini-2.0-flash",
+    temperature: float = 0.3,
 ) -> BaseChatModel:
-    """Create a LangChain ChatOpenAI model client."""
+    """Create a LangChain ChatGoogleGenerativeAI model client."""
 
     if not api_key:
-        raise ValueError("OPENAI_API_KEY is required to call the model.")
+        raise ValueError("GEMINI_API_KEY is required to call the model.")
 
-    llm_kwargs = {
-        "api_key": api_key,
-        "model": model_name,
-        "temperature": temperature,
-    }
-
-    if base_url.strip():
-        llm_kwargs["base_url"] = base_url.strip()
-
-    return ChatOpenAI(
-        **llm_kwargs,
+    return ChatGoogleGenerativeAI(
+        model=model_name,
+        google_api_key=api_key,
+        temperature=temperature,
     )
 
 
-def create_ollama_llm(
-    model_name: str,
-    temperature: float,
-    base_url: str = "http://localhost:11434",
-) -> BaseChatModel:
-    """Create a LangChain ChatOllama client for local free inference."""
-
-    try:
-        module = importlib.import_module("langchain_ollama")
-        chat_ollama_cls = getattr(module, "ChatOllama")
-    except Exception as exc:
-        raise ImportError(
-            "langchain-ollama is required for Ollama mode. Install it with: pip install langchain-ollama"
-        ) from exc
-
-    return chat_ollama_cls(
-        model=model_name,
+# Legacy aliases so existing imports don't break immediately
+def create_llm(api_key: str = "", model_name: str = "", temperature: float = 0.3, base_url: str = "") -> BaseChatModel:
+    """Legacy wrapper — redirects to Gemini."""
+    config = load_config()
+    return create_gemini_llm(
+        api_key=config.gemini_api_key or api_key,
+        model_name=config.gemini_model,
         temperature=temperature,
-        base_url=base_url.strip() or "http://localhost:11434",
+    )
+
+
+def create_ollama_llm(model_name: str = "", temperature: float = 0.3, base_url: str = "") -> BaseChatModel:
+    """Legacy wrapper — redirects to Gemini (Ollama no longer used)."""
+    config = load_config()
+    return create_gemini_llm(
+        api_key=config.gemini_api_key,
+        model_name=config.gemini_model,
+        temperature=temperature,
     )

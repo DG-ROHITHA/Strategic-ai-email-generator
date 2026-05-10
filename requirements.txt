@@ -1,8 +1,9 @@
-streamlit>=1.35.0
-langchain>=0.3.0
-langchain-openai>=0.2.0
-langchain-ollama>=0.2.0
-python-dotenv>=1.0.1
+streamlit
+langchain
+langchain-core
+langchain-google-genai
+google-generativeai
+python-dotenv
 fastapi
 uvicorn
 pydantic
